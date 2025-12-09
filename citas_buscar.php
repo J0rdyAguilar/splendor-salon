@@ -7,9 +7,20 @@ $citas = [];
 $busqueda = $_GET['q'] ?? '';
 
 if ($busqueda) {
-    // Buscar cliente exacto
-    $stmt = $pdo->prepare("SELECT * FROM clientes WHERE nombre LIKE ?");
-    $stmt->execute(['%' . $busqueda . '%']);
+
+    // Buscar cliente por nombre O teléfono
+    $stmt = $pdo->prepare("
+        SELECT *
+        FROM clientes
+        WHERE nombre LIKE ?
+           OR telefono LIKE ?
+        LIMIT 1
+    ");
+    $stmt->execute([
+        '%' . $busqueda . '%',
+        '%' . $busqueda . '%'
+    ]);
+
     $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($cliente) {
@@ -34,7 +45,7 @@ if ($busqueda) {
         <input 
             type="text"
             name="q"
-            placeholder="Buscar cliente por nombre..."
+            placeholder="Buscar cliente por nombre o teléfono..."
             value="<?= htmlspecialchars($busqueda) ?>"
             class="flex-1 bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:border-gold outline-none"
         >
@@ -47,7 +58,7 @@ if ($busqueda) {
 
 
 <?php if ($busqueda && !$cliente): ?>
-    <p class="text-red-400 text-xl">No se encontró ningún cliente con ese nombre.</p>
+    <p class="text-red-400 text-xl">No se encontró ningún cliente con ese nombre o teléfono.</p>
 <?php endif; ?>
 
 

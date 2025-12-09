@@ -8,27 +8,40 @@ include "layout.php";
 $fecha = $_GET['fecha'] ?? date('Y-m-d');
 
 // ======================
-// HORARIOS DISPONIBLES (1 HORA)
+// HORARIOS DISPONIBLES (cada 30 min)
 // ======================
-$horas_disponibles = [
-    "09:00","10:00","11:00","12:00",
-    "13:00","14:00","15:00","16:00","17:00"
-];
+$horas_disponibles = [];
+$inicio = strtotime("08:00");
+$fin = strtotime("18:00");
+
+for ($t = $inicio; $t <= $fin; $t += 1800) {
+    $horas_disponibles[] = date("H:i", $t);
+}
 
 // ======================
-// HORAS OCUPADAS (solo NO canceladas)
+// HORAS OCUPADAS (con duración, solo NO canceladas)
 // ======================
 $stmt = $pdo->prepare("
-    SELECT hora
+    SELECT hora, duracion
     FROM citas
     WHERE fecha = ?
     AND estado != 'cancelado'
 ");
 $stmt->execute([$fecha]);
-$ocupadas_raw = $stmt->fetchAll(PDO::FETCH_COLUMN);
+$citasOcupadas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Convertir 09:00:00 → 09:00
-$ocupadas = array_map(fn($h) => substr($h, 0, 5), $ocupadas_raw);
+$ocupadas = [];
+
+// Marcar varios bloques según la duración
+foreach ($citasOcupadas as $c) {
+    $ini = strtotime($c['hora']);
+    $bloques = intval($c['duracion']) / 30; // 30 min por bloque
+
+    for ($i = 0; $i < $bloques; $i++) {
+        $horaBloque = date("H:i", $ini + ($i * 1800));
+        $ocupadas[] = $horaBloque;
+    }
+}
 
 // ======================
 // LISTA DE CLIENTES
@@ -47,7 +60,6 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$fecha]);
 $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 
 // ======================
 // CALENDARIO MENSUAL
@@ -69,7 +81,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([$month, $year]);
 $citasMes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Indexar
 $citasIndex = [];
 foreach ($citasMes as $c) {
     $citasIndex[$c['fecha']] = $c['total'];
@@ -84,8 +95,6 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
 
 
 <h2 class="text-gold text-3xl font-semibold mb-10">Citas</h2>
-
-
 
 <!-- ====================== -->
 <!-- NAVEGACIÓN DEL MES -->
@@ -114,11 +123,8 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
 
 </div>
 
-
-
-
 <!-- ====================== -->
-<!-- CALENDARIO MENSUAL -->
+<!-- CALENDARIO MENSUAL (NO TOCADO) -->
 <!-- ====================== -->
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl mb-12">
 
@@ -135,7 +141,7 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
             <div></div>
         <?php endfor; ?>
 
-        <?php for ($d = 1; $d <= $daysInMonth; $d++): 
+        <?php for ($d = 1; $d <= $daysInMonth; $d++):
 
             $fechaActual = "$year-$month-" . str_pad($d, 2, '0', STR_PAD_LEFT);
             $ocupadasDia = $citasIndex[$fechaActual] ?? 0;
@@ -167,9 +173,8 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
 <hr class="border-neutral-700 mb-10">
 
 
-
 <!-- ====================== -->
-<!-- NUEVA CITA -->
+<!-- NUEVA CITA (SOLO SE AGREGA DURACIÓN) -->
 <!-- ====================== -->
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl mb-12">
 
@@ -204,12 +209,27 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
             </select>
         </div>
 
-        <!-- CLIENTE CON BUSCADOR -->
+        <!-- DURACIÓN (SOLO ESTO ES NUEVO) -->
+        <div>
+            <label class="text-gray-300 mb-1 block">Duración *</label>
+            <select name="duracion" required
+                class="w-full bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:ring-gold outline-none">
+
+                <option value="">Seleccione duración</option>
+                <option value="30">30 minutos</option>
+                <option value="60">1 hora</option>
+                <option value="90">1 hora 30 min</option>
+                <option value="120">2 horas</option>
+                <option value="150">2 horas 30 min</option>
+                <option value="180">3 horas</option>
+
+            </select>
+        </div>
+
+        <!-- CLIENTE + BUSCADOR (NO TOCADO) -->
         <div class="flex flex-col">
             <label class="text-gray-300 mb-1 block">Cliente *</label>
-
             <div class="space-y-3">
-                <!-- BUSCADOR -->
                 <input 
                     type="text" id="buscarCliente"
                     placeholder="Buscar cliente por nombre..."
@@ -218,12 +238,10 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
                     onkeyup="filtrarClientes()"
                 />
 
-                <!-- SELECT -->
                 <select name="cliente_id" id="selectCliente" required
                     class="w-full bg-black border border-neutral-700 p-3 rounded-xl text-gray-200 
                            focus:border-gold outline-none">
                     <option value="">Seleccione cliente</option>
-
                     <?php foreach ($clientes as $cli): ?>
                         <option value="<?= $cli['id'] ?>"><?= htmlspecialchars($cli['nombre']) ?></option>
                     <?php endforeach; ?>
@@ -245,14 +263,13 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
         }
         </script>
 
-        <!-- MONTO -->
+        <!-- MONTO / NOTAS (NO TOCADO) -->
         <div>
             <label class="text-gray-300 mb-1 block">Monto (Q)</label>
             <input type="number" step="0.01" name="monto"
                 class="w-full bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:ring-gold outline-none" />
         </div>
 
-        <!-- NOTAS -->
         <div class="md:col-span-2">
             <label class="text-gray-300 mb-1 block">Notas</label>
             <textarea name="notas" rows="3"
@@ -269,12 +286,8 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
 
 </div>
 
-
-
-
-
 <!-- ====================== -->
-<!-- LISTADO DE CITAS DEL DÍA -->
+<!-- LISTADO DEL DÍA (NO TOCADO) -->
 <!-- ====================== -->
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl">
 
@@ -361,7 +374,5 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
     </div>
 
 </div>
-
-
 
 <?php include "layout_footer.php"; ?>
