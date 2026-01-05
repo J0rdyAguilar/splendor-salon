@@ -53,7 +53,7 @@ tailwind.config = {
 
             <a href="dashboard.php" class="hover:text-gold transition">Inicio</a>
 
-            <a href="clientes.php" class="hover:text-gold transition">Clientes</a>
+            <a href="clientes.php" class="hover:text-gold transition">Clientas</a>
 
             <a href="citas.php" class="hover:text-gold transition">Citas</a>
 
@@ -61,6 +61,7 @@ tailwind.config = {
 
             <!-- SOLO ADMIN VE CONTABILIDAD -->
             <?php if ($_SESSION['rol'] === 'admin'): ?>
+                <a href="usuarios.php">Usuarios</a>
                 <a href="contabilidad.php" class="hover:text-gold transition">Contabilidad</a>
             <?php endif; ?>
 

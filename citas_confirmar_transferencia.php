@@ -30,33 +30,12 @@ $total = $monto_form;
 
 // ==============================
 // MODO NORMAL (NO ABONO)
-// cobra SOLO el saldo faltante
 // ==============================
 if (!$es_abono) {
 
-    $saldo = max(0, $total - $pagado_db);
-
-    // Si ya no hay saldo, no insertamos nada
-    if ($saldo <= 0.0001) {
-        $stmt = $pdo->prepare("UPDATE citas SET monto=?, monto_pagado=?, estado='pagado' WHERE id=?");
-        $stmt->execute([$total, $total, $id]);
-
-        header("Location: citas.php?fecha=" . $fecha);
-        exit;
-    }
-
-    // Marca pagado completo
-    $stmt = $pdo->prepare("UPDATE citas SET monto=?, monto_pagado=?, estado='pagado' WHERE id=?");
-    $stmt->execute([$total, $total, $id]);
-
-    // Movimiento por SALDO
-    $desc = "Pago efectivo — " . $cita['cliente'];
-
-    $stmt = $pdo->prepare("
-        INSERT INTO movimientos (tipo, fecha, descripcion, monto, cita_id)
-        VALUES ('ingreso', CURDATE(), ?, ?, ?)
-    ");
-    $stmt->execute([$desc, $saldo, $id]);
+    // Solo marcar transferencia pendiente (sin registrar ingreso)
+    $stmt = $pdo->prepare("UPDATE citas SET monto=?, estado='transferencia_pendiente' WHERE id=?");
+    $stmt->execute([$total, $id]);
 
     header("Location: citas.php?fecha=" . $fecha);
     exit;
@@ -76,14 +55,14 @@ if ($abono > $saldo + 0.0001) {
 $nuevo_pagado = $pagado_db + $abono;
 $nuevo_saldo  = max(0, $total - $nuevo_pagado);
 
-// Estado: si completa -> pagado; si no -> pendiente
-$estado = ($nuevo_saldo <= 0.0001) ? "pagado" : "pendiente";
+// Estado: si completa -> pagado; si no -> transferencia_pendiente
+$estado = ($nuevo_saldo <= 0.0001) ? "pagado" : "transferencia_pendiente";
 
 $stmt = $pdo->prepare("UPDATE citas SET monto=?, monto_pagado=?, estado=? WHERE id=?");
 $stmt->execute([$total, $nuevo_pagado, $estado, $id]);
 
 // Movimiento por el ABONO
-$desc = "Abono efectivo — " . $cita['cliente'];
+$desc = "Abono transferencia — " . $cita['cliente'];
 
 $stmt = $pdo->prepare("
     INSERT INTO movimientos (tipo, fecha, descripcion, monto, cita_id)

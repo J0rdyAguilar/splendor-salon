@@ -1,8 +1,8 @@
 <?php
 // validar_login.php
-require "db.php";
+require "db.php"; // aquí ya debería estar session_start()
 
-$username = $_POST['username'] ?? '';
+$username = trim($_POST['username'] ?? '');
 $password = $_POST['password'] ?? '';
 
 // Buscar usuario
@@ -14,12 +14,13 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($user && password_verify($password, $user['password_hash'])) {
 
     // Guardar datos en sesión
-    $_SESSION['usuario'] = $user['username'];
-    $_SESSION['rol'] = $user['rol'];  // <--- IMPORTANTE
+    $_SESSION['id']      = $user['id'];       // ✔ útil para permisos y registros
+    $_SESSION['usuario'] = $user['username']; // ✔ nombre visible
+    $_SESSION['rol']     = $user['rol'];      // ✔ admin / empleado
 
     header("Location: dashboard.php");
     exit;
-} 
+}
 
 // Si falla:
 header("Location: login.php?error=1");

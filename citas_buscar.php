@@ -39,13 +39,13 @@ if ($busqueda) {
 
 <h2 class="text-gold text-3xl font-semibold mb-10">Buscar Citas</h2>
 
-<!-- Buscar -->
+<!-- BUSCADOR -->
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl mb-10">
     <form class="flex gap-4" method="get">
         <input 
             type="text"
             name="q"
-            placeholder="Buscar cliente por nombre o teléfono..."
+            placeholder="Buscar por nombre o teléfono..."
             value="<?= htmlspecialchars($busqueda) ?>"
             class="flex-1 bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:border-gold outline-none"
         >
@@ -56,28 +56,30 @@ if ($busqueda) {
     </form>
 </div>
 
-
 <?php if ($busqueda && !$cliente): ?>
     <p class="text-red-400 text-xl">No se encontró ningún cliente con ese nombre o teléfono.</p>
 <?php endif; ?>
 
-
 <?php if ($cliente): ?>
 
-<!-- Perfil -->
+<!-- PERFIL DEL CLIENTE -->
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl mb-10">
 
     <h3 class="text-gold text-2xl font-semibold mb-4">
         Cliente: <?= htmlspecialchars($cliente['nombre']) ?>
     </h3>
 
-    <p class="text-gray-300">Tel: <?= $cliente['telefono'] ?: 'N/A' ?></p>
-    <p class="text-gray-300 mb-4">Notas: <?= nl2br(htmlspecialchars($cliente['notas'])) ?></p>
+    <?php if ($_SESSION['rol'] === 'admin'): ?>
+        <p class="text-gray-300">Tel: <?= $cliente['telefono'] ?: 'N/A' ?></p>
+    <?php endif; ?>
+
+    <p class="text-gray-300 mb-4">
+        Notas: <?= nl2br(htmlspecialchars($cliente['notas'])) ?>
+    </p>
 
 </div>
 
-
-<!-- HISTORIAL COMPLETO DE CITAS -->
+<!-- HISTORIAL DE CITAS -->
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl">
 
     <h3 class="text-gold text-xl font-semibold mb-6">Historial de citas</h3>
@@ -90,7 +92,11 @@ if ($busqueda) {
                 <tr>
                     <th class="p-4 text-left">Fecha</th>
                     <th class="p-4 text-left">Hora</th>
-                    <th class="p-4 text-left">Monto</th>
+
+                    <?php if ($_SESSION['rol'] === 'admin'): ?>
+                        <th class="p-4 text-left">Monto</th>
+                    <?php endif; ?>
+
                     <th class="p-4 text-left">Estado</th>
                     <th class="p-4 text-left">Notas</th>
                     <th class="p-4 text-center">Acciones</th>
@@ -104,7 +110,12 @@ if ($busqueda) {
 
                     <td class="p-4"><?= $ci['fecha'] ?></td>
                     <td class="p-4"><?= substr($ci['hora'], 0, 5) ?></td>
-                    <td class="p-4"><?= $ci['monto'] ? 'Q '.number_format($ci['monto'],2) : '' ?></td>
+
+                    <?php if ($_SESSION['rol'] === 'admin'): ?>
+                        <td class="p-4">
+                            <?= $ci['monto'] ? 'Q '.number_format($ci['monto'],2) : '' ?>
+                        </td>
+                    <?php endif; ?>
 
                     <td class="p-4">
                         <?php if ($ci['estado'] == 'pendiente'): ?>
@@ -121,39 +132,40 @@ if ($busqueda) {
                         <?php endif; ?>
                     </td>
 
-                    <td class="p-4"><?= nl2br(htmlspecialchars($ci['notas'])) ?></td>
+                    <td class="p-4">
+                        <?= nl2br(htmlspecialchars($ci['notas'])) ?>
+                    </td>
 
                     <td class="p-4 text-center space-y-2">
 
                         <?php if ($ci['estado'] == 'pendiente'): ?>
 
                             <a href="citas_pagar.php?id=<?= $ci['id'] ?>&fecha=<?= $ci['fecha'] ?>"
-                                class="block bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow transition">
+                               class="block bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow transition">
                                 Marcar pagado
                             </a>
 
                             <a href="citas_transferencia.php?id=<?= $ci['id'] ?>&fecha=<?= $ci['fecha'] ?>"
-                                class="block bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow transition">
+                               class="block bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow transition">
                                 Transferencia pendiente
                             </a>
 
                             <a href="citas_estado.php?id=<?= $ci['id'] ?>&fecha=<?= $ci['fecha'] ?>"
-                                class="block bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg shadow transition">
+                               class="block bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg shadow transition">
                                 Cancelar
                             </a>
 
                         <?php elseif ($ci['estado'] == 'transferencia_pendiente'): ?>
 
                             <a href="citas_confirmar_pago.php?id=<?= $ci['id'] ?>&fecha=<?= $ci['fecha'] ?>"
-                                class="block bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow transition">
+                               class="block bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow transition">
                                 Confirmar pago
                             </a>
 
                         <?php endif; ?>
 
-                        <!-- Ir al día -->
                         <a href="citas.php?fecha=<?= $ci['fecha'] ?>"
-                            class="block bg-neutral-700 hover:bg-gold hover:text-black transition px-3 py-2 rounded-lg shadow">
+                           class="block bg-neutral-700 hover:bg-gold hover:text-black transition px-3 py-2 rounded-lg shadow">
                             Ver en calendario
                         </a>
 

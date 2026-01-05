@@ -23,25 +23,23 @@ if (!$cita) {
     die("Cita no encontrada");
 }
 
-$total  = floatval($cita['monto'] ?? 0);
-$pagado = floatval($cita['monto_pagado'] ?? 0);
+$total  = floatval($cita['monto'] ?? 0);          // total (monto final)
+$pagado = floatval($cita['monto_pagado'] ?? 0);   // acumulado
 $saldo  = max(0, $total - $pagado);
 ?>
 
 <?php include "layout.php"; ?>
 
-<h2 class="text-gold text-3xl font-semibold mb-8">Transferencia pendiente</h2>
+<h2 class="text-gold text-3xl font-semibold mb-8">Cobrar cita — <?= htmlspecialchars($cita['cliente']) ?></h2>
 
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl max-w-lg">
 
     <p class="text-gray-300 mb-6">
-        <strong>Cliente:</strong> <?= htmlspecialchars($cita['cliente'] ?? '') ?><br>
         <strong>Fecha:</strong> <?= htmlspecialchars($cita['fecha']) ?><br>
         <strong>Hora:</strong> <?= substr($cita['hora'], 0, 5) ?>
     </p>
 
-    <form action="citas_confirmar_transferencia.php" method="post" class="space-y-6">
-
+    <form action="citas_confirmar_pago.php" method="post" class="space-y-6">
         <input type="hidden" name="id" value="<?= (int)$cita['id'] ?>">
         <input type="hidden" name="fecha" value="<?= htmlspecialchars($fecha) ?>">
 
@@ -56,6 +54,7 @@ $saldo  = max(0, $total - $pagado);
                 required
                 value="<?= $total > 0 ? htmlspecialchars($total) : '' ?>"
                 class="w-full bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:border-gold outline-none"
+                
             >
         </div>
 
@@ -66,14 +65,14 @@ $saldo  = max(0, $total - $pagado);
                 type="checkbox"
                 name="es_abono"
                 value="1"
-                class="w-5 h-5 accent-blue-500"
+                class="w-5 h-5 accent-yellow-500"
             >
             <label for="chk_abonar" class="text-gray-200 font-medium">
                 ¿Abonar?
             </label>
         </div>
 
-        <!-- Bloque abono -->
+        <!-- Bloque abono (oculto por defecto) -->
         <div id="bloque_abono" class="hidden border border-neutral-700 rounded-2xl p-5 bg-black/20">
             <p class="text-gray-300 mb-4">
                 <strong>Total:</strong> Q <span id="txt_total"><?= number_format($total, 2) ?></span><br>
@@ -89,13 +88,16 @@ $saldo  = max(0, $total - $pagado);
                     step="0.01"
                     name="abono"
                     class="w-full bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:border-gold outline-none"
-                    placeholder="Ej: 50"
+                    
                 >
+                <p class="text-gray-500 text-sm mt-2">
+                    * Este campo solo es obligatorio si marcaste “¿Abonar?”
+                </p>
             </div>
         </div>
 
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition shadow">
-            Marcar como transferencia pendiente
+        <button class="bg-gold hover:opacity-90 text-black px-6 py-3 rounded-xl font-semibold transition shadow">
+            Confirmar pago
         </button>
 
     </form>

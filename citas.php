@@ -209,7 +209,7 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
             </select>
         </div>
 
-        <!-- DURACIÓN (SOLO ESTO ES NUEVO) -->
+        <!-- DURACIÓN -->
         <div>
             <label class="text-gray-300 mb-1 block">Duración *</label>
             <select name="duracion" required
@@ -226,28 +226,28 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
             </select>
         </div>
 
-        <!-- CLIENTE + BUSCADOR (NO TOCADO) -->
-        <div class="flex flex-col">
+        <!-- CLIENTE + BUSCADOR -->
+        <div class="md:col-span-2">
             <label class="text-gray-300 mb-1 block">Cliente *</label>
-            <div class="space-y-3">
-                <input 
-                    type="text" id="buscarCliente"
-                    placeholder="Buscar cliente por nombre..."
-                    class="w-full bg-black border border-neutral-700 p-3 rounded-xl text-gold outline-none 
-                           focus:border-gold focus:ring-2 focus:ring-gold"
-                    onkeyup="filtrarClientes()"
-                />
 
-                <select name="cliente_id" id="selectCliente" required
-                    class="w-full bg-black border border-neutral-700 p-3 rounded-xl text-gray-200 
-                           focus:border-gold outline-none">
-                    <option value="">Seleccione cliente</option>
-                    <?php foreach ($clientes as $cli): ?>
-                        <option value="<?= $cli['id'] ?>"><?= htmlspecialchars($cli['nombre']) ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <input 
+                type="text"
+                id="buscarCliente"
+                placeholder="Buscar clienta por nombre..."
+                class="w-full bg-black border border-neutral-700 p-3 rounded-xl text-gold outline-none 
+                    focus:border-gold focus:ring-2 focus:ring-gold mb-3"
+                onkeyup="filtrarClientes()"
+            />
 
-            </div>
+            <select name="cliente_id" id="selectCliente" required
+                class="w-full bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:ring-gold outline-none">
+                <option value="">Seleccione cliente</option>
+                <?php foreach ($clientes as $cli): ?>
+                    <option value="<?= $cli['id'] ?>">
+                        <?= htmlspecialchars($cli['nombre']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
 
         <script>
@@ -263,13 +263,7 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
         }
         </script>
 
-        <!-- MONTO / NOTAS (NO TOCADO) -->
-        <div>
-            <label class="text-gray-300 mb-1 block">Monto (Q)</label>
-            <input type="number" step="0.01" name="monto"
-                class="w-full bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:ring-gold outline-none" />
-        </div>
-
+        <!-- NOTAS -->
         <div class="md:col-span-2">
             <label class="text-gray-300 mb-1 block">Notas</label>
             <textarea name="notas" rows="3"
@@ -287,7 +281,7 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
 </div>
 
 <!-- ====================== -->
-<!-- LISTADO DEL DÍA (NO TOCADO) -->
+<!-- LISTADO DEL DÍA -->
 <!-- ====================== -->
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl">
 
@@ -311,11 +305,27 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
             <tbody>
 
                 <?php foreach ($citas as $ci): ?>
+                <?php
+                    $total  = floatval($ci['monto'] ?? 0);
+                    $pagado = floatval($ci['monto_pagado'] ?? 0);
+                    $saldo  = max(0, $total - $pagado);
+                ?>
                 <tr class="border-b border-neutral-800 hover:bg-neutral-800/70 transition">
 
                     <td class="p-4"><?= substr($ci['hora'], 0, 5) ?></td>
-                    <td class="p-4"><?= $ci['cliente'] ?></td>
-                    <td class="p-4"><?= $ci['monto'] ? 'Q '.number_format($ci['monto'],2) : '' ?></td>
+                    <td class="p-4"><?= htmlspecialchars($ci['cliente']) ?></td>
+
+                    <td class="p-4">
+                        <?php if ($total > 0 && $pagado > 0): ?>
+                            <div class="text-gray-200 font-semibold">Q <?= number_format($total,2) ?></div>
+                            <div class="text-xs text-gray-400">Abonado: Q <?= number_format($pagado,2) ?></div>
+                            <div class="text-xs text-gold">Saldo: Q <?= number_format($saldo,2) ?></div>
+                        <?php elseif ($total > 0): ?>
+                            Q <?= number_format($total,2) ?>
+                        <?php else: ?>
+                            <?= '' ?>
+                        <?php endif; ?>
+                    </td>
 
                     <td class="p-4">
                         <?php if ($ci['estado'] == 'pendiente'): ?>
@@ -338,9 +348,9 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
 
                         <?php if ($ci['estado'] == 'pendiente'): ?>
 
-                            <a href="citas_pagar.php?id=<?= $ci['id'] ?>&fecha=<?= $fecha ?>"
-                               class="block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition">
-                                Marcar pagado
+                            <a href="citas_cobrar.php?id=<?= $ci['id'] ?>&fecha=<?= $fecha ?>"
+                               class="block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                                Cobrar cita
                             </a>
 
                             <a href="citas_transferencia.php?id=<?= $ci['id'] ?>&fecha=<?= $fecha ?>"
@@ -355,9 +365,15 @@ $nextYear  = date('Y', strtotime("+1 month", $firstDay));
 
                         <?php elseif ($ci['estado'] == 'transferencia_pendiente'): ?>
 
-                            <a href="citas_confirmar_pago.php?id=<?= $ci['id'] ?>&fecha=<?= $fecha ?>"
-                               class="block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition">
-                                Confirmar pago
+                            <!-- ✅ CORREGIDO: debe ir a pantalla de transferencia, no a confirmar pago -->
+                            <a href="citas_transferencia.php?id=<?= $ci['id'] ?>&fecha=<?= $fecha ?>"
+                               class="block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition">
+                                Ver / Abonar transferencia
+                            </a>
+
+                            <a href="citas_estado.php?id=<?= $ci['id'] ?>&fecha=<?= $fecha ?>"
+                               class="block bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow transition">
+                                Cancelar
                             </a>
 
                         <?php endif; ?>

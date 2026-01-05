@@ -29,7 +29,20 @@ if ($busqueda) {
 }
 ?>
 
-<h2 class="text-gold text-3xl font-semibold mb-8">Clientes</h2>
+<h2 class="text-gold text-3xl font-semibold mb-8">Clientas</h2>
+
+<?php if (isset($_GET['error']) && $_GET['error'] === 'tiene_citas'): ?>
+    <div class="bg-red-600 text-white p-4 rounded-xl mb-6 shadow">
+        ❌ No se puede eliminar el cliente porque tiene citas registradas.
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['ok']) && $_GET['ok'] === 'eliminado'): ?>
+    <div class="bg-green-600 text-black p-4 rounded-xl mb-6 shadow">
+        ✅ Cliente eliminado correctamente.
+    </div>
+<?php endif; ?>
+
 
 <!-- =============================== -->
 <!-- SECCIÓN: NUEVO CLIENTE -->
@@ -37,7 +50,7 @@ if ($busqueda) {
 
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl mb-10">
 
-    <h3 class="text-gold text-xl font-semibold mb-6">Nuevo cliente</h3>
+    <h3 class="text-gold text-xl font-semibold mb-6">Nueva clienta</h3>
 
     <form action="clientes_guardar.php" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
@@ -78,7 +91,7 @@ if ($busqueda) {
             <button 
                 class="bg-gold text-black px-6 py-3 rounded-xl font-semibold hover:bg-gold-dark transition shadow-md w-full md:w-auto"
             >
-                Guardar cliente
+                Guardar clienta
             </button>
         </div>
 
@@ -94,7 +107,7 @@ if ($busqueda) {
         <input 
             type="text" 
             name="q"
-            placeholder="Buscar cliente por nombre o teléfono..."
+            placeholder="Buscar por nombre o teléfono..."
             value="<?= htmlspecialchars($busqueda) ?>"
             class="flex-1 bg-black border border-neutral-700 p-4 rounded-xl text-gray-200 focus:border-gold outline-none"
         >
@@ -114,7 +127,7 @@ if ($busqueda) {
 
 <div class="bg-neutral-900 border border-neutral-700 p-8 rounded-2xl shadow-xl">
 
-    <h3 class="text-gold text-xl font-semibold mb-6">Listado de clientes</h3>
+    <h3 class="text-gold text-xl font-semibold mb-6">Listado de clientas</h3>
 
     <div class="overflow-x-auto rounded-xl border border-neutral-800">
         <table class="w-full border-collapse">
